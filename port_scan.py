@@ -47,7 +47,7 @@ def scan_tcp(target, port, timeout):
                     elif port == 25:
                         s.sendall(b"EHLO scanner\r\n")
                     elif port == 3306:
-                        s.sendall(b"\x00")  # basic MySQL handshake
+                        s.sendall(b"\x00") # Basic MySQL handshake
                     else:
                         s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
                     banner = s.recv(1024).decode(errors="ignore").strip()
