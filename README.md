@@ -2,7 +2,7 @@
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
 
-This Python script allows you to scan TCP and UDP ports on one or more targets with support for banner grabbing, filtering, output to JSON/CSV, port shuffling, and reverse DNS resolution. It's a flexible and extensible tool for network reconnaissance and service discovery.
+This Python script allows you to scan TCP and UDP ports on one or more targets with support for banner grabbing, filtering, output to JSON/CSV, port shuffling, default credential detection, and reverse DNS resolution.
 
 ---
 
@@ -17,6 +17,7 @@ This script uses Python’s built-in libraries plus one external module:
 - `json`
 - `csv`
 - `datetime`
+- `subprocess`
 - `colorama` *(install with `pip install colorama`)*
 
 ---
@@ -24,9 +25,11 @@ This script uses Python’s built-in libraries plus one external module:
 ## 🧰 Features
 
 - Scan **TCP and/or UDP** ports
+- **ICMP ping + TCP fallback** to verify live hosts
 - Supports **custom port ranges**
 - Scan **multiple targets** from a file
 - **Banner grabbing** on known ports (e.g., HTTP, FTP, SSH)
+- **Detect default/weak FTP credentials**
 - Save results in **JSON or CSV**
 - **Color-coded output** in the terminal
 - **Reverse DNS lookup** for targets
@@ -86,6 +89,7 @@ If no target is provided, the script will prompt you to enter one interactively.
 | `--shuffle`          | Randomize port order                                    |
 | `--filter-banner`    | Only show ports that return banners                     |
 | `--filter-service`   | Only show specific services (e.g. `http,ssh`)           |
+| `--detect-creds`     | Attempt default/weak FTP credentials                    |
 
 ---
 
@@ -112,6 +116,11 @@ Shuffle ports and filter for banners:
 ```bash
 python3 scanner.py scanme.nmap.org --shuffle --filter-banner
 ```
+Scan and check for default FTP credentials:
+```bash
+python3 scanner.py scanme.nmap.org --detect-creds
+```
+
 ## 📤 Output Formats
 
 ### JSON
