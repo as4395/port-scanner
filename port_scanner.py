@@ -4,6 +4,7 @@ import os
 import random
 import json
 import csv
+import subprocess
 from datetime import datetime
 from colorama import Fore, Style, init
 
@@ -27,6 +28,24 @@ def get_service_name(port):
     except:
         return "unknown"
 
+def is_host_alive(ip, fallback_ports=[80, 443]):
+    try:
+        # Try ICMP ping first
+        ping_result = subprocess.run(["ping", "-c", "1", "-W", "1", ip], stdout=subprocess.DEVNULL)
+        if ping_result.returncode == 0:
+            return True
+    except:
+        pass
+
+    # Fall back to TCP connection attempt on common ports
+    for port in fallback_ports:
+        try:
+            with socket.create_connection((ip, port), timeout=1):
+                return True
+        except:
+            continue
+    return False
+
 def scan_tcp(target, port, timeout):
     category_lookup = {
         'http': 'Web', 'https': 'Web', 'ftp': 'File Sharing', 'ssh': 'Remote Access', 'telnet': 'Remote Access',
@@ -47,15 +66,14 @@ def scan_tcp(target, port, timeout):
                     elif port == 25:
                         s.sendall(b"EHLO scanner\r\n")
                     elif port == 3306:
-                        s.sendall(b"\x00")  # basic MySQL handshake
+                        s.sendall(b"\x00")
                     else:
                         s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
                     banner = s.recv(1024).decode(errors="ignore").strip()
                 except:
                     pass
                 service = get_service_name(port)
-                service_lower = service.lower()
-                category = category_lookup.get(service_lower, "Other")
+                category = category_lookup.get(service.lower(), "Other")
                 return {
                     "port": port,
                     "service": service,
@@ -78,6 +96,24 @@ def scan_udp(target, port, timeout):
             return {"port": port, "service": service, "banner": "", "protocol": "UDP", "category": "Other", "timestamp": datetime.now().isoformat()}
     except:
         return None
+
+def detect_weak_credentials(target):
+    default_ftp_creds = [("anonymous", "anonymous@domain.com"), ("admin", "admin"), ("root", "toor")]
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(2)
+            s.connect((target, 21))
+            s.recv(1024)
+            for user, pwd in default_ftp_creds:
+                s.sendall(f"USER {user}\r\n".encode())
+                s.recv(1024)
+                s.sendall(f"PASS {pwd}\r\n".encode())
+                response = s.recv(1024).decode(errors="ignore")
+                if "230" in response:
+                    return (user, pwd)
+    except:
+        pass
+    return None
 
 def save_results(results, output, fmt):
     try:
@@ -103,10 +139,12 @@ def scan_target(target, ports, args):
     for i, port in enumerate(ports, 1):
         print(f"\rScanning port {port} ({i}/{len(ports)})...", end="", flush=True)
         result = scan_tcp(target, port, args.timeout)
+
         if args.udp:
-            result_udp = scan_udp(target, port, args.timeout)
-            if result_udp:
-                result = result_udp
+            udp_result = scan_udp(target, port, args.timeout)
+            if udp_result:
+                results.append(udp_result)
+
         if result:
             if args.filter_banner and not result["banner"]:
                 continue
@@ -115,6 +153,11 @@ def scan_target(target, ports, args):
             results.append(result)
             print(Fore.GREEN + f"\n[+] Port {result['port']} ({result['service'].upper()}) {result['protocol']} open" +
                   (f" | Banner: {result['banner'].splitlines()[0]}" if result['banner'] else ""))
+
+    if args.detect_creds:
+        creds = detect_weak_credentials(target)
+        if creds:
+            print(Fore.YELLOW + f"[!] Weak FTP credentials found: {creds[0]}:{creds[1]}")
 
     duration = datetime.now() - start_time
     print(f"\n[✓] Scan complete in {duration}")
@@ -125,7 +168,8 @@ def scan_target(target, ports, args):
         print(Fore.MAGENTA + f"[+] Results saved to {args.output} ({args.format.upper()})")
 
 def main():
-    parser = argparse.ArgumentParser(description="Advanced Port Scanner with TCP/UDP, JSON/CSV, and Filters")
+    parser = argparse.ArgumentParser(description="Advanced Port Scanner with TCP/UDP, JSON/CSV, Filters, and Credential Detection")
+    parser.add_argument("--detect-creds", action="store_true", help="Attempt to detect default/weak credentials (FTP only)")
     parser.add_argument("target", nargs="?", help="Target IP or domain")
     parser.add_argument("-r", "--range", help="Custom port range (e.g. 1-1024)")
     parser.add_argument("-f", "--file", help="File with list of targets (one per line)")
@@ -162,12 +206,16 @@ def main():
     for target in targets:
         try:
             ip = socket.gethostbyname(target)
-            try:
-                reverse_dns = socket.gethostbyaddr(ip)[0]
-                print(f"[~] Scanning {target} ({ip}) | Reverse DNS: {reverse_dns}")
-            except socket.herror:
-                print(f"[~] Scanning {target} ({ip}) | Reverse DNS: Not found")
-            scan_target(ip, ports, args)
+            if is_host_alive(ip):
+                try:
+                    reverse_dns = socket.gethostbyaddr(ip)[0]
+                    print(f"[~] Scanning {target} ({ip}) | Reverse DNS: {reverse_dns}")
+                except socket.herror:
+                    print(f"[~] Scanning {target} ({ip}) | Reverse DNS: Not found")
+                print(Fore.CYAN + f"[+] Host {ip} is alive. Proceeding to scan.")
+                scan_target(ip, ports, args)
+            else:
+                print(Fore.RED + f"[!] Host {ip} appears to be down or unresponsive.")
         except socket.gaierror:
             print(Fore.RED + f"[!] Could not resolve {target}")
 
