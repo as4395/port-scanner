@@ -74,3 +74,43 @@ def start_scan():
     start_time = datetime.now()
 
     results = []
+
+
+    for port in ports:
+        result = scan_tcp(ip, port)
+        if result:
+            results.append(result)
+            output_box.insert(tk.END, f"{result['protocol']} {result['port']} OPEN ({result['service']})\n")
+
+        if do_udp:
+            result_udp = scan_udp(ip, port)
+            if result_udp:
+                results.append(result_udp)
+                output_box.insert(tk.END, f"{result_udp['protocol']} {result_udp['port']} OPEN ({result_udp['service']})\n")
+
+        root.update()
+
+    duration = datetime.now() - start_time
+    output_box.insert(tk.END, f"\nScan completed in {duration}.\n")
+
+    export_button.config(state="normal")
+    root.results_data = results
+
+def export_results():
+    results = getattr(root, 'results_data', None)
+    if not results:
+        messagebox.showinfo("No Results", "No results to export.")
+        return
+
+    file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json"), ("CSV files", "*.csv")])
+    if not file_path:
+        return
+
+    if file_path.endswith(".json"):
+        with open(file_path, "w") as f:
+            json.dump(results, f, indent=4)
+    elif file_path.endswith(".csv"):
+        with open(file_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["port", "protocol", "service", "banner"])
+            writer.writeheader()
+            writer.writerows(results)
