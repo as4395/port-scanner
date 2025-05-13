@@ -114,3 +114,35 @@ def export_results():
             writer = csv.DictWriter(f, fieldnames=["port", "protocol", "service", "banner"])
             writer.writeheader()
             writer.writerows(results)
+
+
+root = tk.Tk()
+root.title("Advanced GUI Port Scanner")
+
+frame = tk.Frame(root)
+frame.pack(padx=10, pady=10)
+
+tk.Label(frame, text="Target:").grid(row=0, column=0, sticky="e")
+entry_target = tk.Entry(frame, width=30)
+entry_target.grid(row=0, column=1, pady=5)
+
+tk.Label(frame, text="Port Range (start-end):").grid(row=1, column=0, sticky="e")
+entry_ports = tk.Entry(frame, width=30)
+entry_ports.grid(row=1, column=1, pady=5)
+
+shuffle_var = tk.BooleanVar()
+tk.Checkbutton(frame, text="Shuffle Ports", variable=shuffle_var).grid(row=2, column=1, sticky="w")
+
+udp_var = tk.BooleanVar()
+tk.Checkbutton(frame, text="Enable UDP Scan", variable=udp_var).grid(row=3, column=1, sticky="w")
+
+scan_button = tk.Button(frame, text="Start Scan", command=start_scan, bg="green", fg="white")
+scan_button.grid(row=4, column=0, columnspan=2, pady=10)
+
+export_button = tk.Button(frame, text="Export Results", command=export_results, state="disabled")
+export_button.grid(row=5, column=0, columnspan=2)
+
+output_box = scrolledtext.ScrolledText(root, width=80, height=20)
+output_box.pack(padx=10, pady=10)
+
+root.mainloop()
