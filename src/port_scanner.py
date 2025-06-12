@@ -11,15 +11,110 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 # Top 100 commonly used ports
+# Top 100 commonly used TCP/UDP ports (services, exploits, scanning targets)
 TOP_PORTS = [
-    20, 21, 22, 23, 24, 25, 26, 53, 69, 80, 81, 88, 110, 111, 135, 137, 139, 143,
-    161, 162, 389, 443, 445, 465, 500, 636, 993, 995, 1025, 1026, 1027, 1028, 1029,
-    1030, 1080, 1433, 1521, 1720, 1723, 1900, 3128, 3306, 3389, 5000, 5432, 5800,
-    5900, 5901, 6000, 7000, 8000, 8080, 8081, 8443, 8888, 10000, 32768,
-    49152, 49153, 49154, 49155, 49156, 49157, 49158, 49159, 49160, 49161, 49162,
-    49163, 49164, 49165, 49166, 49167, 49168, 49169, 49170, 49171, 49172, 49173,
-    49174, 49175, 49176, 49177, 49178, 49179, 49180, 49181, 49182, 49183, 49184,
-    49185, 49186, 49187, 49188, 49189, 49190, 49191, 49192, 49193, 49194
+    20,    # FTP (Data Transfer)
+    21,    # FTP (Command)
+    22,    # SSH (Secure Shell)
+    23,    # Telnet (Unencrypted Remote Login)
+    24,    # Priv-Mail (any private mail system)
+    25,    # SMTP (Mail Transfer)
+    26,    # Alternate SMTP (Mail)
+    53,    # DNS (Domain Name System)
+    69,    # TFTP (Trivial File Transfer Protocol)
+    80,    # HTTP (Web)
+    81,    # HTTP Alternate / Management UI
+    88,    # Kerberos (Authentication)
+    110,   # POP3 (Mail Retrieval)
+    111,   # RPCBind / Portmapper (SunRPC)
+    135,   # MS RPC (DCOM Service Control)
+    137,   # NetBIOS Name Service
+    139,   # NetBIOS Session Service
+    143,   # IMAP (Mail Retrieval)
+    161,   # SNMP (Monitoring)
+    162,   # SNMP Trap (Asynchronous Alerts)
+    389,   # LDAP (Directory Services)
+    443,   # HTTPS (Secure Web)
+    445,   # SMB over IP (Windows File Sharing)
+    465,   # SMTPS (Secure Mail Transfer)
+    500,   # IKE (VPN IPsec Key Exchange)
+    636,   # LDAPS (Secure LDAP)
+    993,   # IMAPS (Secure IMAP)
+    995,   # POP3S (Secure POP3)
+    1025,  # Windows RPC (High)
+    1026,  # Windows Service Port
+    1027,  # Windows Service Port
+    1028,  # Windows Service Port
+    1029,  # Windows Service Port
+    1030,  # Windows Service Port
+    1080,  # SOCKS Proxy
+    1433,  # Microsoft SQL Server
+    1521,  # Oracle Database
+    1720,  # H.323 (VoIP/Video)
+    1723,  # PPTP (VPN Tunneling)
+    1900,  # SSDP (UPnP Discovery)
+    3128,  # Squid HTTP Proxy
+    3306,  # MySQL Database
+    3389,  # RDP (Remote Desktop)
+    5000,  # UPnP / Flask / IoT APIs
+    5432,  # PostgreSQL
+    5800,  # VNC Web Interface
+    5900,  # VNC (Remote GUI)
+    5901,  # VNC Alternate Instance
+    6000,  # X11 (Graphical Remote)
+    7000,  # AFS (File System) / Other Services
+    8000,  # HTTP Dev Server / IoT
+    8080,  # HTTP Proxy / Alternate Web
+    8081,  # HTTP Alt / Web UI
+    8443,  # HTTPS Alternate (Tomcat, Admin UIs)
+    8888,  # Web UI / Alt HTTP
+    10000, # Webmin / Backup Exec / Misc Admin Panels
+    32768, # RPC (Linux legacy ephemeral port)
+
+    # Microsoft Windows Ephemeral Port Range (RFC 6056)
+    49152  # Start of dynamic/private (ephemeral) ports per IANA (RFC 6335); used by Windows, Linux, macOS, and other operating systems.
+    49153,
+    49154,
+    49155,
+    49156,
+    49157,
+    49158,
+    49159,
+    49160,
+    49161,
+    49162,
+    49163,
+    49164,
+    49165,
+    49166,
+    49167,
+    49168,
+    49169,
+    49170,
+    49171,
+    49172,
+    49173,
+    49174,
+    49175,
+    49176,
+    49177,
+    49178,
+    49179,
+    49180,
+    49181,
+    49182,
+    49183,
+    49184,
+    49185,
+    49186,
+    49187,
+    49188,
+    49189,
+    49190,
+    49191,
+    49192,
+    49193,
+    49194  # End of the default ephemeral port range in computer networking
 ]
 
 def get_service_name(port):
